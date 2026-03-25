@@ -2,59 +2,41 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Google Search Bar</title>
+    <title>Google Button</title>
     <style>
         body {
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
-            margin: 0;
-            background-color: #202124;
-            font-family: Arial, sans-serif;
-        }
-
-        .search-container {
-            display: flex;
-            background: #fff;
-            border-radius: 24px;
-            padding: 6px 15px;
-            width: 400px;
-            box-shadow: 0 1px 6px rgba(32,33,36,0.28);
-        }
-
-        input {
-            flex-grow: 1;
-            border: none;
-            outline: none;
-            padding: 10px;
-            font-size: 16px;
+            background-color: #f0f0f0;
+            font-family: Arial;
         }
 
         button {
-            background: #4285f4;
+            padding: 20px 40px;
+            font-size: 20px;
+            background-color: #4285F4;
             color: white;
             border: none;
-            border-radius: 18px;
-            padding: 8px 20px;
+            border-radius: 10px;
             cursor: pointer;
-            font-weight: bold;
-            transition: background 0.2s;
         }
 
         button:hover {
-            background: #357ae8;
+            background-color: #3367D6;
         }
     </style>
 </head>
 <body>
 
-    <form action="https://www.google.com" method="GET" class="search-container">
-        <!-- Das Name-Attribut 'q' ist wichtig, damit Google weiß, dass dies der Suchbegriff ist -->
-        <input type="google" name="q" placeholder="Suche auf Google..." required>
-        <button type="google">Search</button>
-    </form>
+<button onclick="openGoogle()">Google öffnen</button>
+
+<script>
+function openGoogle() {
+    window.open("https://www.google.com", "_blank");
+}
+</script>
 
 </body>
 </html>
