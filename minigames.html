@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>🎮 MiniArcade</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --bg: #0d0d14;
+  --surface: #13131f;
+  --card: #1a1a2e;
+  --border: #2a2a45;
+  --accent: #00f5a0;
+  --accent2: #f500b8;
+  --accent3: #ffd60a;
+  --text: #e8e8f0;
+  --muted: #6b6b8a;
+  --radius: 12px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;min-height:100vh;overflow-x:hidden}
+
+/* BG grid */
+body::before{
+  content:'';position:fixed;inset:0;z-index:0;
+  background-image:linear-gradient(rgba(0,245,160,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,245,160,0.03) 1px,transparent 1px);
+  background-size:40px 40px;
+  pointer-events:none;
+}
+
+/* ── HEADER ── */
+header{
+  position:relative;z-index:10;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:1.5rem 2.5rem;
+  border-bottom:1px solid var(--border);
+  background:rgba(13,13,20,0.85);
+  backdrop-filter:blur(12px);
+  position:sticky;top:0;
+}
+.logo{font-size:1.5rem;font-weight:800;letter-spacing:-0.02em}
+.logo span{color:var(--accent)}
+.admin-btn{
+  background:none;border:1px solid var(--border);color:var(--muted);
+  padding:0.5rem 1rem;border-radius:6px;cursor:pointer;
+  font-family:'Space Mono',monospace;font-size:0.75rem;
+  transition:all 0.2s;display:flex;align-items:center;gap:0.4rem;
+}
+.admin-btn:hover{border-color:var(--accent);color:var(--accent)}
+
+/* ── HERO ── */
+.hero{
+  text-align:center;padding:4rem 2rem 2rem;position:relative;z-index:1;
+}
+.hero h1{font-size:clamp(2.2rem,5vw,4rem);font-weight:800;line-height:1.1;margin-bottom:1rem}
+.hero h1 .hi{color:var(--accent)}
+.hero h1 .low{color:var(--accent2)}
+.hero p{color:var(--muted);font-size:1rem;max-width:480px;margin:0 auto 2rem;line-height:1.7}
+.game-count{
+  display:inline-flex;align-items:center;gap:0.5rem;
+  background:var(--card);border:1px solid var(--border);
+  padding:0.4rem 1rem;border-radius:100px;
+  font-family:'Space Mono',monospace;font-size:0.8rem;color:var(--accent);
+}
+
+/* ── GRID ── */
+.games-section{padding:2rem 2.5rem 4rem;position:relative;z-index:1}
+.section-title{font-size:1.1rem;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;color:var(--muted);margin-bottom:1.5rem}
+#games-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(220px,1fr));
+  gap:1.25rem;
+}
+.game-card{
+  background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+  padding:0;overflow:hidden;cursor:pointer;
+  transition:transform 0.2s,border-color 0.2s,box-shadow 0.2s;
+  position:relative;
+}
+.game-card:hover{
+  transform:translateY(-4px);
+  border-color:var(--accent);
+  box-shadow:0 0 24px rgba(0,245,160,0.15);
+}
+.game-preview{
+  height:130px;position:relative;overflow:hidden;
+  display:flex;align-items:center;justify-content:center;
+  background:#0a0a16;
+}
+.game-preview iframe{
+  width:100%;height:100%;border:none;pointer-events:none;
+  transform:scale(0.6);transform-origin:center center;
+  border-radius:4px;
+}
+.game-emoji-big{
+  font-size:3.5rem;
+  filter:drop-shadow(0 0 20px rgba(255,255,255,0.3));
+  position:absolute;
+  transition:opacity 0.3s;
+  z-index:2;
+}
+.game-card:hover .game-emoji-big{opacity:0}
+.game-info{padding:1rem 1.1rem}
+.game-title{font-weight:700;font-size:0.95rem;margin-bottom:0.25rem}
+.game-tag{font-family:'Space Mono',monospace;font-size:0.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em}
+
+/* ── MODAL: PLAY ── */
+.modal-overlay{
+  display:none;position:fixed;inset:0;z-index:1000;
+  background:rgba(5,5,10,0.92);backdrop-filter:blur(8px);
+  align-items:center;justify-content:center;
+}
+.modal-overlay.open{display:flex}
+.modal-box{
+  background:var(--card);border:1px solid var(--border);border-radius:16px;
+  width:min(92vw,860px);max-height:92vh;
+  display:flex;flex-direction:column;overflow:hidden;
+  animation:popIn 0.25s ease;
+}
+@keyframes popIn{from{opacity:0;transform:scale(0.95)}to{opacity:1;transform:scale(1)}}
+.modal-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:1rem 1.5rem;border-bottom:1px solid var(--border);
+}
+.modal-title{font-weight:800;font-size:1.1rem;display:flex;align-items:center;gap:0.6rem}
+.close-btn{
+  background:none;border:none;color:var(--muted);font-size:1.4rem;cursor:pointer;
+  width:32px;height:32px;border-radius:6px;
+  display:flex;align-items:center;justify-content:center;
+  transition:background 0.2s,color 0.2s;
+}
+.close-btn:hover{background:rgba(255,255,255,0.06);color:var(--text)}
+.modal-body{flex:1;overflow:hidden;position:relative}
+.modal-body iframe{width:100%;height:100%;border:none;min-height:460px}
+.modal-body .game-placeholder{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  height:460px;gap:1rem;color:var(--muted);
+  font-family:'Space Mono',monospace;font-size:0.9rem;
+}
+.game-placeholder .big-emoji{font-size:5rem;margin-bottom:0.5rem}
+
+/* ── MODAL: ADMIN ── */
+#admin-modal .modal-box{max-width:480px}
+.admin-form{padding:1.5rem;display:flex;flex-direction:column;gap:1.2rem}
+.form-group{display:flex;flex-direction:column;gap:0.4rem}
+.form-group label{font-size:0.8rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted)}
+.form-group input, .form-group textarea{
+  background:var(--bg);border:1px solid var(--border);border-radius:8px;
+  padding:0.75rem 1rem;color:var(--text);font-family:'Syne',sans-serif;font-size:0.95rem;
+  outline:none;transition:border-color 0.2s;resize:vertical;
+}
+.form-group input:focus,.form-group textarea:focus{border-color:var(--accent)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.btn-add{
+  background:var(--accent);color:#000;border:none;
+  padding:0.85rem;border-radius:8px;font-family:'Syne',sans-serif;
+  font-size:0.95rem;font-weight:700;cursor:pointer;
+  transition:background 0.2s,transform 0.15s;
+}
+.btn-add:hover{background:#00e090;transform:translateY(-1px)}
+.error-msg{color:var(--accent2);font-size:0.8rem;font-family:'Space Mono',monospace;display:none}
+.success-msg{
+  background:rgba(0,245,160,0.1);border:1px solid rgba(0,245,160,0.3);
+  color:var(--accent);padding:0.75rem 1rem;border-radius:8px;
+  font-size:0.85rem;display:none;text-align:center;
+}
+
+/* ── PIN SCREEN ── */
+#pin-screen{padding:1.5rem;display:flex;flex-direction:column;gap:1rem}
+#pin-screen p{color:var(--muted);font-size:0.85rem;font-family:'Space Mono',monospace}
+.pin-input-row{display:flex;gap:0.5rem}
+#pin-input{flex:1}
+.btn-unlock{
+  background:var(--accent2);color:#fff;border:none;padding:0.75rem 1.2rem;
+  border-radius:8px;font-family:'Syne',sans-serif;font-weight:700;cursor:pointer;
+  transition:background 0.2s;
+}
+.btn-unlock:hover{background:#e000a8}
+
+/* ── EMPTY STATE ── */
+.empty-state{
+  grid-column:1/-1;text-align:center;padding:4rem 2rem;color:var(--muted);
+  font-family:'Space Mono',monospace;font-size:0.85rem;
+}
+.empty-state .em{font-size:3rem;display:block;margin-bottom:1rem}
+
+/* ── DELETE BTN ── */
+.delete-card-btn{
+  position:absolute;top:6px;right:6px;z-index:5;
+  background:rgba(245,0,184,0.85);color:#fff;border:none;
+  width:22px;height:22px;border-radius:4px;cursor:pointer;font-size:0.7rem;
+  display:none;align-items:center;justify-content:center;
+  transition:background 0.2s;
+}
+.delete-card-btn:hover{background:var(--accent2)}
+.admin-mode .game-card .delete-card-btn{display:flex}
+
+/* scrollbar */
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+
+@keyframes fadeIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.game-card{animation:fadeIn 0.4s ease both}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="logo">🕹️ Mini<span>Arcade</span></div>
+  <button class="admin-btn" onclick="openAdmin()">🔐 Admin</button>
+</header>
+
+<!-- HERO -->
+<div class="hero">
+  <h1><span class="hi">Spiel</span> was du<br><span class="low">willst.</span></h1>
+  <p>Deine persönliche Sammlung an Mini-Spielen. Klicke auf ein Spiel und leg sofort los.</p>
+  <div class="game-count">⚡ <span id="count">0</span> Spiele verfügbar</div>
+</div>
+
+<!-- GAMES -->
+<div class="games-section">
+  <div class="section-title">— Alle Spiele</div>
+  <div id="games-grid"></div>
+</div>
+
+<!-- PLAY MODAL -->
+<div class="modal-overlay" id="play-modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-title" id="play-title">Spiel</div>
+      <button class="close-btn" onclick="closePlay()">✕</button>
+    </div>
+    <div class="modal-body" id="play-body"></div>
+  </div>
+</div>
+
+<!-- ADMIN MODAL -->
+<div class="modal-overlay" id="admin-modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-title">🔐 Admin Panel</div>
+      <button class="close-btn" onclick="closeAdmin()">✕</button>
+    </div>
+
+    <!-- PIN SCREEN -->
+    <div id="pin-screen">
+      <p>Gib den Admin-Code ein, um fortzufahren:</p>
+      <div class="pin-input-row">
+        <input id="pin-input" type="password" placeholder="••••••" maxlength="10"
+          style="font-family:'Space Mono',monospace;letter-spacing:0.2em;font-size:1.1rem"
+          onkeydown="if(event.key==='Enter')checkPin()"/>
+        <button class="btn-unlock" onclick="checkPin()">Unlock</button>
+      </div>
+      <div class="error-msg" id="pin-error">❌ Falscher Code!</div>
+    </div>
+
+    <!-- ADD GAME FORM (hidden until unlocked) -->
+    <div id="add-form" style="display:none">
+      <div class="admin-form">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Emoji</label>
+            <input id="f-emoji" type="text" placeholder="🎮" maxlength="4"/>
+          </div>
+          <div class="form-group">
+            <label>Titel</label>
+            <input id="f-title" type="text" placeholder="Mein Spiel"/>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>HTML / URL des Spiels</label>
+          <textarea id="f-code" rows="6" placeholder="Füge hier HTML-Code ein (z.B. ein &lt;canvas&gt; Spiel) oder eine URL…"></textarea>
+        </div>
+        <div class="form-group">
+          <label>Tag (optional)</label>
+          <input id="f-tag" type="text" placeholder="Arcade, Puzzle, …"/>
+        </div>
+        <div class="success-msg" id="add-success">✅ Spiel hinzugefügt!</div>
+        <button class="btn-add" onclick="addGame()">+ Spiel hinzufügen</button>
+
+        <div style="border-top:1px solid var(--border);padding-top:1rem;margin-top:0.5rem">
+          <div class="section-title" style="margin-bottom:0.75rem;font-size:0.8rem">— Gespeicherte Spiele löschen</div>
+          <button onclick="toggleDeleteMode()" style="background:rgba(245,0,184,0.15);border:1px solid var(--accent2);color:var(--accent2);padding:0.5rem 1rem;border-radius:6px;cursor:pointer;font-family:'Syne',sans-serif;font-size:0.85rem" id="del-mode-btn">🗑 Löschmodus aktivieren</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── STATE ──
+let games = JSON.parse(localStorage.getItem('minigames') || '[]');
+let adminUnlocked = false;
+let deleteMode = false;
+
+// ── BUILT-IN GAMES ──
+const builtins = [
+  {
+    id: 'builtin-snake',
+    emoji: '🐍',
+    title: 'Snake',
+    tag: 'Klassiker',
+    code: `snake`
+  },
+  {
+    id: 'builtin-breakout',
+    emoji: '🧱',
+    title: 'Breakout',
+    tag: 'Arcade',
+    code: `breakout`
+  },
+  {
+    id: 'builtin-memory',
+    emoji: '🃏',
+    title: 'Memory',
+    tag: 'Puzzle',
+    code: `memory`
+  },
+  {
+    id: 'builtin-reaction',
+    emoji: '⚡',
+    title: 'Reaktionstest',
+    tag: 'Reflex',
+    code: `reaction`
+  }
+];
+
+// ── RENDER ──
+function render() {
+  const grid = document.getElementById('games-grid');
+  const all = [...builtins, ...games];
+  document.getElementById('count').textContent = all.length;
+  grid.innerHTML = '';
+  if (all.length === 0) {
+    grid.innerHTML = '<div class="empty-state"><span class="em">🎮</span>Noch keine Spiele. Füge welche über Admin hinzu!</div>';
+    return;
+  }
+  all.forEach((g, i) => {
+    const card = document.createElement('div');
+    card.className = 'game-card';
+    card.style.animationDelay = (i * 0.06) + 's';
+
+    const previewHtml = buildPreview(g);
+    card.innerHTML = `
+      <button class="delete-card-btn" title="Löschen" onclick="event.stopPropagation();deleteGame('${g.id}')">✕</button>
+      <div class="game-preview">
+        <div class="game-emoji-big">${g.emoji}</div>
+        ${previewHtml}
+      </div>
+      <div class="game-info">
+        <div class="game-title">${g.emoji} ${g.title}</div>
+        <div class="game-tag">${g.tag || 'Mini-Spiel'}</div>
+      </div>
+    `;
+    card.addEventListener('click', () => openPlay(g));
+    grid.appendChild(card);
+  });
+  if (deleteMode) document.getElementById('games-grid').closest('body') && document.body.classList.add('admin-mode');
+}
+
+function buildPreview(g) {
+  if (g.code && !g.code.startsWith('http') && !g.code.startsWith('builtin-') && g.code !== 'snake' && g.code !== 'breakout' && g.code !== 'memory' && g.code !== 'reaction') {
+    // custom HTML: show as tiny iframe preview
+    const blob = new Blob([g.code], {type:'text/html'});
+    const url = URL.createObjectURL(blob);
+    return `<iframe src="${url}" sandbox="allow-scripts" scrolling="no"></iframe>`;
+  }
+  return '';
+}
+
+// ── PLAY ──
+function openPlay(g) {
+  document.getElementById('play-title').innerHTML = `${g.emoji} ${g.title}`;
+  const body = document.getElementById('play-body');
+  let content = '';
+
+  if (g.code === 'snake') content = snakeGame();
+  else if (g.code === 'breakout') content = breakoutGame();
+  else if (g.code === 'memory') content = memoryGame();
+  else if (g.code === 'reaction') content = reactionGame();
+  else if (g.code && g.code.startsWith('http')) {
+    content = `<iframe src="${g.code}" style="width:100%;height:100%;min-height:460px;border:none" sandbox="allow-scripts allow-same-origin"></iframe>`;
+  } else if (g.code) {
+    const blob = new Blob([g.code], {type:'text/html'});
+    const url = URL.createObjectURL(blob);
+    content = `<iframe src="${url}" style="width:100%;height:100%;min-height:460px;border:none" sandbox="allow-scripts"></iframe>`;
+  } else {
+    content = `<div class="game-placeholder"><span class="big-emoji">${g.emoji}</span><span>Kein Spiel-Code gefunden.</span></div>`;
+  }
+  body.innerHTML = content;
+  document.getElementById('play-modal').classList.add('open');
+}
+function closePlay() {
+  document.getElementById('play-modal').classList.remove('open');
+  document.getElementById('play-body').innerHTML = '';
+}
+
+// ── ADMIN ──
+function openAdmin() {
+  document.getElementById('admin-modal').classList.add('open');
+  if (!adminUnlocked) {
+    document.getElementById('pin-screen').style.display = '';
+    document.getElementById('add-form').style.display = 'none';
+    document.getElementById('pin-input').focus();
+  }
+}
+function closeAdmin() {
+  document.getElementById('admin-modal').classList.remove('open');
+}
+function checkPin() {
+  const val = document.getElementById('pin-input').value;
+  if (val === '221212') {
+    adminUnlocked = true;
+    document.getElementById('pin-screen').style.display = 'none';
+    document.getElementById('add-form').style.display = '';
+  } else {
+    document.getElementById('pin-error').style.display = 'block';
+    document.getElementById('pin-input').value = '';
+    setTimeout(() => document.getElementById('pin-error').style.display = 'none', 2000);
+  }
+}
+function addGame() {
+  const emoji = document.getElementById('f-emoji').value.trim() || '🎮';
+  const title = document.getElementById('f-title').value.trim();
+  const code  = document.getElementById('f-code').value.trim();
+  const tag   = document.getElementById('f-tag').value.trim();
+  if (!title || !code) return;
+  const newGame = { id: 'g-' + Date.now(), emoji, title, code, tag };
+  games.push(newGame);
+  localStorage.setItem('minigames', JSON.stringify(games));
+  document.getElementById('f-title').value = '';
+  document.getElementById('f-code').value = '';
+  document.getElementById('f-emoji').value = '';
+  document.getElementById('f-tag').value = '';
+  const s = document.getElementById('add-success');
+  s.style.display = 'block';
+  setTimeout(() => s.style.display = 'none', 2500);
+  render();
+}
+function deleteGame(id) {
+  games = games.filter(g => g.id !== id);
+  localStorage.setItem('minigames', JSON.stringify(games));
+  render();
+}
+function toggleDeleteMode() {
+  deleteMode = !deleteMode;
+  if (deleteMode) {
+    document.body.classList.add('admin-mode');
+    document.getElementById('del-mode-btn').textContent = '✅ Löschmodus deaktivieren';
+  } else {
+    document.body.classList.remove('admin-mode');
+    document.getElementById('del-mode-btn').textContent = '🗑 Löschmodus aktivieren';
+  }
+}
+
+// close on overlay click
+document.getElementById('play-modal').addEventListener('click', e => { if(e.target.id==='play-modal') closePlay(); });
+document.getElementById('admin-modal').addEventListener('click', e => { if(e.target.id==='admin-modal') closeAdmin(); });
+
+// ─────────────────────────────────────────────
+// BUILT-IN GAME CODE (returns full HTML string)
+// ─────────────────────────────────────────────
+function snakeGame() {
+  return `<iframe srcdoc="${encodeForIframe(`<!DOCTYPE html><html><head><meta charset='UTF-8'>
+<style>
+body{margin:0;background:#0d0d14;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;font-family:monospace;color:#e8e8f0}
+canvas{border:2px solid #2a2a45;border-radius:4px}
+#score{margin-bottom:12px;font-size:1.1rem;color:#00f5a0}
+#msg{margin-top:12px;font-size:0.85rem;color:#6b6b8a}
+</style></head><body>
+<div id='score'>Score: 0</div>
+<canvas id='c' width='360' height='360'></canvas>
+<div id='msg'>Pfeiltasten zum Steuern</div>
+<script>
+const c=document.getElementById('c'),ctx=c.getContext('2d');
+const S=20,W=18,H=18;
+let snake=[{x:9,y:9}],dir={x:1,y:0},food={},score=0,running=false,t;
+function rnd(){return{x:Math.floor(Math.random()*W),y:Math.floor(Math.random()*H)}}
+function init(){snake=[{x:9,y:9}];dir={x:1,y:0};score=0;food=rnd();running=true;update()}
+function draw(){
+  ctx.fillStyle='#0a0a16';ctx.fillRect(0,0,c.width,c.height);
+  ctx.fillStyle='#f500b8';ctx.fillRect(food.x*S,food.y*S,S-2,S-2);
+  snake.forEach((s,i)=>{ctx.fillStyle=i===0?'#00f5a0':'#00c070';ctx.fillRect(s.x*S,s.y*S,S-2,S-2)});
+  document.getElementById('score').textContent='Score: '+score;
+}
+function update(){
+  if(!running)return;
+  const h={x:snake[0].x+dir.x,y:snake[0].y+dir.y};
+  if(h.x<0||h.x>=W||h.y<0||h.y>=H||snake.some(s=>s.x===h.x&&s.y===h.y)){running=false;document.getElementById('msg').textContent='Game Over! Klicke zum Neustarten';return}
+  snake.unshift(h);
+  if(h.x===food.x&&h.y===food.y){score++;food=rnd()}else snake.pop();
+  draw();t=setTimeout(update,140);
+}
+document.addEventListener('keydown',e=>{
+  if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key))e.preventDefault();
+  if(e.key==='ArrowUp'&&dir.y===0)dir={x:0,y:-1};
+  if(e.key==='ArrowDown'&&dir.y===0)dir={x:0,y:1};
+  if(e.key==='ArrowLeft'&&dir.x===0)dir={x:-1,y:0};
+  if(e.key==='ArrowRight'&&dir.x===0)dir={x:1,y:0};
+});
+c.addEventListener('click',()=>{clearTimeout(t);init()});
+init();
+<\/script></body></html>`)}" style="width:100%;height:100%;min-height:460px;border:none" sandbox="allow-scripts"></iframe>`;
+}
+
+function breakoutGame() {
+  return `<iframe srcdoc="${encodeForIframe(`<!DOCTYPE html><html><head><meta charset='UTF-8'>
+<style>body{margin:0;background:#0d0d14;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;font-family:monospace;color:#e8e8f0}canvas{border:2px solid #2a2a45;border-radius:4px}#info{margin-bottom:10px;color:#00f5a0;font-size:1rem}#msg{margin-top:10px;font-size:0.8rem;color:#6b6b8a}</style>
+</head><body>
+<div id='info'>Score: 0 | Level 1</div>
+<canvas id='c' width='420' height='340'></canvas>
+<div id='msg'>Maus bewegen zum Steuern | Klicken zum Starten</div>
+<script>
+const c=document.getElementById('c'),ctx=c.getContext('2d');
+const PW=70,PH=10,BW=38,BH=12,BR=4,ROWS=4,COLS=9;
+let px=c.width/2-PW/2,ball={x:210,y:280,vx:3,vy:-4},score=0,bricks=[],going=false;
+function makeBricks(){bricks=[];const cols=['#f500b8','#ffd60a','#00f5a0','#4af3ff'];
+for(let r=0;r<ROWS;r++)for(let col=0;col<COLS;col++)bricks.push({x:6+col*(BW+5),y:40+r*(BH+6),alive:true,c:cols[r]})}
+function draw(){
+  ctx.fillStyle='#0a0a16';ctx.fillRect(0,0,c.width,c.height);
+  bricks.forEach(b=>{if(!b.alive)return;ctx.fillStyle=b.c;ctx.beginPath();ctx.roundRect(b.x,b.y,BW,BH,3);ctx.fill()});
+  ctx.fillStyle='#00f5a0';ctx.fillRect(px,c.height-25,PW,PH);
+  ctx.beginPath();ctx.arc(ball.x,ball.y,8,0,Math.PI*2);ctx.fillStyle='#ffd60a';ctx.fill();
+  document.getElementById('info').textContent='Score: '+score;
+}
+function update(){
+  if(!going)return;
+  ball.x+=ball.vx;ball.y+=ball.vy;
+  if(ball.x<8||ball.x>c.width-8)ball.vx*=-1;
+  if(ball.y<8)ball.vy*=-1;
+  if(ball.y>c.height){going=false;document.getElementById('msg').textContent='Game Over! Klicken zum Neustarten';makeBricks();score=0;ball={x:210,y:280,vx:3,vy:-4};draw();return}
+  if(ball.y>c.height-35&&ball.y<c.height-15&&ball.x>px&&ball.x<px+PW){ball.vy=-Math.abs(ball.vy);ball.vx+=((ball.x-(px+PW/2))/15)}
+  bricks.forEach(b=>{if(!b.alive)return;if(ball.x>b.x&&ball.x<b.x+BW&&ball.y>b.y&&ball.y<b.y+BH){b.alive=false;ball.vy*=-1;score+=10}});
+  if(bricks.every(b=>!b.alive)){going=false;document.getElementById('msg').textContent='🎉 Gewonnen! Klicken für nächstes Level';makeBricks()}
+  draw();requestAnimationFrame(update);
+}
+c.addEventListener('mousemove',e=>{const r=c.getBoundingClientRect();px=e.clientX-r.left-PW/2;px=Math.max(0,Math.min(c.width-PW,px))});
+c.addEventListener('click',()=>{if(!going){going=true;ball={x:210,y:270,vx:3+(Math.random()-0.5),vy:-4};document.getElementById('msg').textContent='Maus bewegen zum Steuern';update()}});
+makeBricks();draw();
+<\/script></body></html>`)}" style="width:100%;height:100%;min-height:460px;border:none" sandbox="allow-scripts"></iframe>`;
+}
+
+function memoryGame() {
+  return `<iframe srcdoc="${encodeForIframe(`<!DOCTYPE html><html><head><meta charset='UTF-8'>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0d0d14;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;font-family:monospace;color:#e8e8f0;padding:1rem}
+h2{color:#00f5a0;margin-bottom:1rem;font-size:1rem}
+#grid{display:grid;grid-template-columns:repeat(4,80px);gap:10px}
+.card{width:80px;height:80px;background:#1a1a2e;border:2px solid #2a2a45;border-radius:10px;font-size:2rem;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform 0.15s,background 0.2s;user-select:none}
+.card:hover{transform:scale(1.06)}
+.card.flipped{background:#13131f;border-color:#00f5a0}
+.card.matched{background:rgba(0,245,160,0.1);border-color:#00f5a0;cursor:default}
+#info{margin-top:1rem;color:#6b6b8a;font-size:0.8rem}
+button{margin-top:1rem;background:#f500b8;color:#fff;border:none;padding:0.5rem 1.5rem;border-radius:6px;cursor:pointer;font-family:monospace}
+</style></head><body>
+<h2>🃏 Memory — finde alle Paare!</h2>
+<div id='grid'></div>
+<div id='info'>Züge: 0</div>
+<button onclick='init()'>Neu starten</button>
+<script>
+const emojis=['🍕','🚀','🐉','⚡','🎸','🌊','🔥','💎'];
+let cards=[],flipped=[],matched=0,moves=0,locked=false;
+function init(){
+  const g=document.getElementById('grid');g.innerHTML='';
+  const arr=[...emojis,...emojis].sort(()=>Math.random()-0.5);
+  cards=[];matched=0;moves=0;flipped=[];locked=false;
+  arr.forEach((e,i)=>{
+    const d=document.createElement('div');
+    d.className='card';d.dataset.i=i;d.dataset.e=e;d.textContent='?';
+    d.addEventListener('click',()=>flip(d));
+    g.appendChild(d);cards.push(d);
+  });
+  document.getElementById('info').textContent='Züge: 0';
+}
+function flip(d){
+  if(locked||d.classList.contains('matched')||flipped.includes(d))return;
+  d.classList.add('flipped');d.textContent=d.dataset.e;flipped.push(d);
+  if(flipped.length===2){
+    moves++;locked=true;
+    if(flipped[0].dataset.e===flipped[1].dataset.e){
+      flipped.forEach(c=>{c.classList.add('matched');c.classList.remove('flipped')});
+      matched+=2;flipped=[];locked=false;
+      if(matched===cards.length)document.getElementById('info').textContent='🎉 Gewonnen in '+moves+' Zügen!';
+      else document.getElementById('info').textContent='Züge: '+moves;
+    } else {
+      setTimeout(()=>{flipped.forEach(c=>{c.classList.remove('flipped');c.textContent='?'});flipped=[];locked=false;document.getElementById('info').textContent='Züge: '+moves},800);
+    }
+  }
+}
+init();
+<\/script></body></html>`)}" style="width:100%;height:100%;min-height:460px;border:none" sandbox="allow-scripts"></iframe>`;
+}
+
+function reactionGame() {
+  return `<iframe srcdoc="${encodeForIframe(`<!DOCTYPE html><html><head><meta charset='UTF-8'>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0d0d14;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;font-family:monospace;color:#e8e8f0;text-align:center;gap:1rem;padding:2rem;cursor:pointer;user-select:none}
+#box{width:300px;height:260px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;font-weight:bold;transition:background 0.1s;border:2px solid #2a2a45}
+#result{font-size:1.1rem;min-height:2rem;color:#00f5a0}
+#best{font-size:0.75rem;color:#6b6b8a}
+#sub{font-size:0.8rem;color:#6b6b8a}
+</style></head><body>
+<div id='box' style='background:#1a1a2e'>Klicke zum Starten</div>
+<div id='result'></div>
+<div id='best'>Bester: —</div>
+<div id='sub'>Klicke auf Grün so schnell wie möglich!</div>
+<script>
+let state='idle',t0,best=Infinity,to;
+const box=document.getElementById('box'),res=document.getElementById('result'),bestEl=document.getElementById('best');
+function setWait(){
+  state='wait';
+  box.style.background='#1a1a50';box.textContent='Warte...';
+  res.textContent='';
+  const d=1500+Math.random()*3000;
+  to=setTimeout(()=>{state='go';box.style.background='#00c060';box.textContent='JETZT!';t0=Date.now()},d);
+}
+box.addEventListener('click',()=>{
+  if(state==='idle'){setWait();return}
+  if(state==='wait'){clearTimeout(to);res.textContent='⚡ Zu früh! Nochmal...';res.style.color='#f500b8';state='idle';box.style.background='#1a1a2e';box.textContent='Klicke zum Starten';return}
+  if(state==='go'){
+    const ms=Date.now()-t0;state='idle';
+    if(ms<best){best=ms;bestEl.textContent='Bester: '+best+' ms 🏆'}
+    let col=ms<200?'#00f5a0':ms<350?'#ffd60a':'#f500b8';
+    res.style.color=col;
+    res.textContent=ms+' ms — '+(ms<200?'Unglaublich! ⚡':ms<350?'Gut! 👍':'Langsam 😅');
+    box.style.background='#1a1a2e';box.textContent='Nochmal klicken';
+  }
+});
+<\/script></body></html>`)}" style="width:100%;height:100%;min-height:460px;border:none" sandbox="allow-scripts"></iframe>`;
+}
+
+function encodeForIframe(html) {
+  return html.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+// ── INIT ──
+render();
+</script>
+</body>
+</html>
