@@ -3,186 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Block Blast | NEON OS v5.0</title>
+    <title>Block Blast | v6.0 Fixed</title>
     <style>
-        :root {
-            --primary: #00ffcc;
-            --secondary: #9d00ff;
-            --bg: #020205;
-            --surface: #0a0a12;
-            --text: #e0e0e0;
+        :root { --neon: #00ffcc; --bg: #050505; }
+        body, html { margin: 0; padding: 0; height: 100%; background: var(--bg); overflow: hidden; font-family: sans-serif; }
+        
+        .container { display: flex; flex-direction: column; height: 100vh; }
+        
+        header { 
+            background: #111; padding: 10px 20px; color: var(--neon); 
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 2px solid var(--neon);
         }
 
-        * { box-sizing: border-box; transition: all 0.2s ease; }
-        body {
-            margin: 0; background: var(--bg); color: var(--text);
-            font-family: 'Courier New', monospace;
-            display: grid;
-            grid-template-columns: 250px 1fr 300px;
-            height: 100vh; overflow: hidden;
+        .game-wrapper { flex-grow: 1; position: relative; }
+        
+        /* Iframe füllt den gesamten verfügbaren Platz */
+        iframe { width: 100%; height: 100%; border: none; }
+
+        .loader {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            text-align: center; color: white;
         }
-
-        /* --- LINKER BEREICH: PROFIL & XP --- */
-        .sidebar-left {
-            background: var(--surface);
-            border-right: 1px solid #1a1a2e;
-            padding: 20px;
-            display: flex; flex-direction: column; gap: 20px;
+        .spinner {
+            width: 40px; height: 40px; border: 4px solid #333; border-top: 4px solid var(--neon);
+            border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 10px;
         }
-
-        .profile-box {
-            text-align: center; border: 1px solid var(--primary);
-            padding: 15px; border-radius: 10px; background: rgba(0,255,204,0.05);
-        }
-
-        .xp-bar-container {
-            width: 100%; height: 10px; background: #111;
-            border-radius: 5px; margin-top: 10px; overflow: hidden;
-        }
-        #xp-fill { width: 0%; height: 100%; background: var(--primary); box-shadow: 0 0 10px var(--primary); }
-
-        /* --- MITTE: DAS SPIEL --- */
-        main { position: relative; display: flex; flex-direction: column; }
-        .game-header {
-            height: 50px; background: #000; display: flex;
-            align-items: center; justify-content: space-between; padding: 0 20px;
-            border-bottom: 1px solid var(--primary);
-        }
-
-        #game-frame { flex-grow: 1; border: none; background: #000; width: 100%; height: 100%; }
-
-        /* --- RECHTER BEREICH: TERMINAL --- */
-        .sidebar-right {
-            background: #000; padding: 15px;
-            display: flex; flex-direction: column; font-size: 0.75rem;
-        }
-
-        #terminal {
-            flex-grow: 1; background: rgba(0,0,0,0.8); border: 1px solid #1a1a2e;
-            padding: 10px; color: var(--primary); overflow-y: auto;
-            text-shadow: 0 0 5px var(--primary);
-        }
-
-        /* --- ACHIEVEMENTS --- */
-        #toast-container {
-            position: fixed; bottom: 20px; right: 20px; z-index: 1000;
-        }
-        .toast {
-            background: var(--secondary); color: white; padding: 15px 25px;
-            border-radius: 5px; margin-top: 10px; animation: slideIn 0.5s forwards;
-        }
-
-        @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
-
-        /* Buttons */
-        .btn-neon {
-            background: transparent; border: 1px solid var(--primary);
-            color: var(--primary); padding: 8px; cursor: pointer;
-            text-transform: uppercase; letter-spacing: 2px;
-        }
-        .btn-neon:hover { background: var(--primary); color: #000; box-shadow: 0 0 20px var(--primary); }
-
+        @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
-    <section class="sidebar-left">
-        <div class="profile-box">
-            <div style="font-size: 0.8rem; opacity: 0.6;">RANK: <span id="rank-name">NOOB</span></div>
-            <div style="font-size: 1.5rem; font-weight: bold;">LVL <span id="lvl-val">1</span></div>
-            <div class="xp-bar-container"><div id="xp-fill"></div></div>
-            <div style="font-size: 0.6rem; margin-top: 5px;"><span id="xp-current">0</span> / 100 XP</div>
+<div class="container">
+    <header>
+        <strong>BLOCK BLAST PRO</strong>
+        <button onclick="document.documentElement.requestFullscreen()" style="cursor:pointer; background:var(--neon); border:none; padding:5px 10px; border-radius:4px; font-weight:bold;">Vollbild</button>
+    </header>
+
+    <div class="game-wrapper">
+        <div id="loading" class="loader">
+            <div class="spinner"></div>
+            <p>Initialisiere System...</p>
         </div>
+        <!-- Verifizierte Einbettungs-URL -->
+        <iframe 
+            src="https://html5.gamedistribution.com" 
+            allowfullscreen 
+            onload="document.getElementById('loading').style.display='none';">
+        </iframe>
+    </div>
+</div>
 
-        <button class="btn-neon" onclick="toggleFS()">Vollbild ⛶</button>
-        
-        <div style="margin-top: 20px;">
-            <h4 style="color: var(--secondary);">QUESTS</h4>
-            <ul style="font-size: 0.7rem; list-style: none; padding: 0;">
-                <li>[ ] Überlebe 5 Min.</li>
-                <li>[ ] Erreiche Level 5</li>
-                <li>[ ] Nutze Vollbild</li>
-            </ul>
-        </div>
-    </section>
-
-    <main>
-        <div class="game-header">
-            <div id="sys-msg">> STATUS: CONNECTED</div>
-            <div id="session-time">00:00</div>
-        </div>
-        <iframe id="game-frame" src="https://www.blockblastunblocked.cc" onload="log('Iframe loaded. System ready.')"></iframe>
-    </main>
-
-    <section class="sidebar-right">
-        <h4>SYSTEM LOGS</h4>
-        <div id="terminal">
-            <div>[OK] Booting NEON OS...</div>
-            <div>[OK] Kernel 5.0.1 initialized.</div>
-        </div>
-        <input type="text" id="console-input" placeholder="Kommando eingeben..." 
-               style="background: #111; border: 1px solid #333; color: var(--primary); padding: 5px; margin-top: 10px;">
-    </section>
-
-    <div id="toast-container"></div>
-
-    <script>
-        let xp = parseInt(localStorage.getItem('xp')) || 0;
-        let lvl = parseInt(localStorage.getItem('lvl')) || 1;
-
-        // 1. XP System
-        function addXP(amount) {
-            xp += amount;
-            if (xp >= 100) {
-                xp = 0; lvl++;
-                showToast("LEVEL UP! Du bist jetzt Level " + lvl);
-                document.getElementById('rank-name').innerText = lvl > 5 ? "PRO" : "GAMER";
-            }
-            updateUI();
-            localStorage.setItem('xp', xp);
-            localStorage.setItem('lvl', lvl);
-        }
-
-        function updateUI() {
-            document.getElementById('xp-fill').style.width = xp + "%";
-            document.getElementById('xp-current').innerText = xp;
-            document.getElementById('lvl-val').innerText = lvl;
-        }
-
-        // 2. XP Tick (Jede Minute 10 XP fürs Spielen)
-        setInterval(() => { addXP(10); log("XP gained for activity (+10)"); }, 60000);
-
-        // 3. Logger
-        function log(msg) {
-            const term = document.getElementById('terminal');
-            const entry = document.createElement('div');
-            entry.innerText = `[${new Date().toLocaleTimeString()}] ${msg}`;
-            term.appendChild(entry);
-            term.scrollTop = term.scrollHeight;
-        }
-
-        // 4. Achievement Toasts
-        function showToast(text) {
-            const container = document.getElementById('toast-container');
-            const t = document.createElement('div');
-            t.className = 'toast';
-            t.innerText = text;
-            container.appendChild(t);
-            setTimeout(() => t.remove(), 4000);
-        }
-
-        // 5. Timer
-        let sec = 0;
-        setInterval(() => {
-            sec++;
-            let m = Math.floor(sec/60).toString().padStart(2,'0');
-            let s = (sec%60).toString().padStart(2,'0');
-            document.getElementById('session-time').innerText = `${m}:${s}`;
-        }, 1000);
-
-        function toggleFS() { document.getElementById('game-frame').requestFullscreen(); }
-
-        updateUI();
-    </script>
 </body>
 </html>
