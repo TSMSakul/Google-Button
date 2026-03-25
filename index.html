@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <title>Google Button</title>
+    <title>Social Media Buttons</title>
     <style>
         body {
             display: flex;
@@ -10,33 +10,45 @@
             align-items: center;
             height: 100vh;
             background-color: #f0f0f0;
-            font-family: Arial;
+            font-family: Arial, sans-serif;
+            gap: 15px; /* Abstand zwischen den Buttons */
+            flex-wrap: wrap; /* Zeilenumbruch bei wenig Platz */
         }
 
         button {
-            padding: 20px 40px;
-            font-size: 20px;
-            background-color: #4285F4;
+            padding: 15px 30px;
+            font-size: 18px;
             color: white;
             border: none;
             border-radius: 10px;
             cursor: pointer;
+            transition: opacity 0.2s;
+            min-width: 140px;
         }
 
         button:hover {
-            background-color: #3367D6;
+            opacity: 0.8;
         }
+
+        /* Farben für die verschiedenen Dienste */
+        .btn-google { background-color: #4285F4; }
+        .btn-youtube { background-color: #FF0000; }
+        .btn-tiktok { background-color: #000000; }
+        .btn-bing { background-color: #00809D; }
     </style>
 </head>
 <body>
 
-<button onclick="openGoogle()">Google öffnen</button>
+    <button class="btn-google" onclick="openUrl('https://www.google.com')">Google</button>
+    <button class="btn-youtube" onclick="openUrl('https://www.youtube.com')">YouTube</button>
+    <button class="btn-tiktok" onclick="openUrl('https://www.tiktok.com')">TikTok</button>
+    <button class="btn-bing" onclick="openUrl('https://www.bing.com')">Bing</button>
 
-<script>
-function openGoogle() {
-    window.open("https://www.google.com", "_blank");
-}
-</script>
+    <script>
+    function openUrl(url) {
+        window.open(url, "_blank");
+    }
+    </script>
 
 </body>
 </html>
